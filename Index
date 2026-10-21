@@ -1,0 +1,1241 @@
+import React, { useState, useMemo } from 'react';
+import {
+  Building2,
+  Palette,
+  ShoppingBag,
+  LineChart,
+  Truck,
+  FileCheck,
+  ShieldCheck,
+  Receipt,
+  Download,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  ChevronRight,
+  Filter,
+  Search,
+  MapPin,
+  Box,
+  Layers,
+  ArrowRight,
+  Info,
+  DollarSign,
+  Calculator,
+  Globe,
+  ExternalLink,
+  Sparkles,
+  QrCode,
+  X,
+  CreditCard,
+  User,
+  PieChart,
+  Clock,
+  ArrowUpRight
+} from 'lucide-react';
+
+// --- INITIAL DATA & SEEDS ---
+const SAMPLE_ARTWORKS = [
+  {
+    id: 'art-01',
+    title: 'Fragmentos de Niebla y Sol',
+    artist: 'Annya R.',
+    location: 'Tlalpan - Xochimilco (Periferia CDMX)',
+    category: 'Pintura 2D',
+    medium: 'Óleo y acrílico sobre lienzo',
+    dimensions: '140 x 180 cm',
+    weight: '6.5 kg',
+    price: 32000,
+    ticketLevel: 'medio',
+    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
+    anchoring: 'Bastidor reforzado con doble hembrilla metálica de alta resistencia',
+    has3dFile: true,
+    certificateId: 'CERT-2026-X79A',
+    provenance: ['Taller del Artista (Tlalpan)', 'Verificación ArtConnex', 'Colección Privada'],
+    description: 'Exploración orgánica de los contrastes entre la humedad matutina del sur de la ciudad y el crecimiento urbano acelerado.'
+  },
+  {
+    id: 'art-02',
+    title: 'Monolito Antrópico III',
+    artist: 'Pamela Treviño',
+    location: 'Monterrey, NL',
+    category: 'Escultura 3D',
+    medium: 'Bronce patinado y base de recinto negro',
+    dimensions: '65 x 40 x 40 cm',
+    weight: '38.0 kg',
+    price: 115000,
+    ticketLevel: 'alto',
+    image: 'https://images.unsplash.com/photo-1544411047-c491e34a24e0?auto=format&fit=crop&w=800&q=80',
+    anchoring: 'Anclaje a suelo/plinto mediante espárragos roscados de 3/8" (incluye plantilla 3D)',
+    has3dFile: true,
+    certificateId: 'CERT-2026-M88B',
+    provenance: ['Fundición Artística Monterrey', 'Exposición Temporal Metrópolis'],
+    description: 'Escultura geométrica de alto peso pensada para vestíbulos corporativos y residencias de gran escala.'
+  },
+  {
+    id: 'art-03',
+    title: 'Horizonte Marino I (Acapulco)',
+    artist: 'Gabriela Vanegas',
+    location: 'Acapulco, Guerrero',
+    category: 'Pintura 2D',
+    medium: 'Mixta sobre madera de cedro',
+    dimensions: '100 x 100 cm',
+    weight: '8.0 kg',
+    price: 14500,
+    ticketLevel: 'emergente',
+    image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80',
+    anchoring: 'Riel de colgado integrado en reverso',
+    has3dFile: false,
+    certificateId: 'CERT-2026-G12C',
+    provenance: ['Taller Acapulco', 'Primera Edición Digital'],
+    description: 'Gama cromática inspirada en la luz costera previa a las tormentas tropicales del Pacífico.'
+  },
+  {
+    id: 'art-04',
+    title: 'Estructura Modular Urbana',
+    artist: 'Liliana Rodríguez',
+    location: 'Roma Sur, CDMX',
+    category: 'Escultura 3D',
+    medium: 'Acero ensamblado y laca automotriz',
+    dimensions: '120 x 80 x 50 cm',
+    weight: '22.0 kg',
+    price: 48000,
+    ticketLevel: 'medio',
+    image: 'https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&w=800&q=80',
+    anchoring: 'Soporte oculto para muro estructural o tablaroca reforzada',
+    has3dFile: true,
+    certificateId: 'CERT-2026-L99D',
+    provenance: ['Estudio Roma Sur', 'Galería Emergente CDMX'],
+    description: 'Ensamblaje metálico ligero con presencia volumétrica continua para proyectos de interiorismo residencial.'
+  }
+];
+
+const PIVOTE_INSIGHTS = [
+  {
+    title: 'Comisiones de Galería Física vs Digital',
+    type: 'validado',
+    quote: '"Con galerías, normalmente es 50-50" — Artista consolidada / Liliana Rodríguez / Pamela Treviño',
+    details: 'Se confirma que el 40-50% de comisión es el estándar castigador del mercado tradicional. Nuestra respuesta es una tarifa escalonada justa (5% a 12%) ajustada al valor de la obra.',
+    impact: 'Base de modelo de ingresos'
+  },
+  {
+    title: 'Fragmentación Logística y Desgaste',
+    type: 'validado',
+    quote: '"Envolver cuadros a mano, cotizar a ojo, pagar envíos de su bolsillo... 30% del tiempo perdido" — Pamela / Liliana',
+    details: 'El dolor logístico no es exclusivo del emergente: afecta al escultor de alto ticket y al comprador curador por igual.',
+    impact: 'Logística automatizada con empaque pro'
+  },
+  {
+    title: 'Desconfianza Aduanal e Importaciones',
+    type: 'hallazgo-nuevo',
+    quote: '"Pagué 50-60% adicional en fletes y trámites aduanales, con piezas dañadas sin respaldo" — Aida Garza (Compradora)',
+    details: 'Surgió un costo oculto crítico no considerado en el modelo original: los compradores internacionales sufren por aranceles imprevistos y falta de seguro integral.',
+    impact: 'Cotizador de aranceles pre-pago'
+  },
+  {
+    title: 'Segmento B2B: Arquitectura e Interiorismo',
+    type: 'hallazgo-nuevo',
+    quote: 'Exigen facturación CFDI fiscal SAT y Fichas Técnicas 3D (peso, volumen, tipo de anclaje) para especificar en planos.',
+    details: 'Los grandes compradores no solo buscan estética, requieren certeza estructural y deducción de impuestos inmediata.',
+    impact: 'Módulo B2B + Descarga de Fichas 3D'
+  },
+  {
+    title: 'Centralización Geográfica en CDMX',
+    type: 'validado',
+    quote: '"Son 4 horas de trayecto que podría estar ocupando en el taller" — Annya (Tlalpan) / Gabriela (Acapulco)',
+    details: 'Estar fuera del corredor Roma/Condesa/Polanco destruye oportunidades para artistas con alta preparación profesional.',
+    impact: 'Mercado geográficamente agnóstico'
+  }
+];
+
+export default function App() {
+  // State
+  const [activeRole, setActiveRole] = useState('comprador'); // 'comprador', 'artista', 'galeria', 'insights'
+  const [selectedArtwork, setSelectedArtwork] = useState(null);
+  const [cart, setCart] = useState([]);
+  const [filterCategory, setFilterCategory] = useState('todos');
+  const [filterRegion, setFilterRegion] = useState('todas');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Checkout flow state
+  const [checkoutStep, setCheckoutStep] = useState(1); // 1: Resumen/Logistica, 2: Datos Fiscales SAT, 3: Confirmacion / SPEI
+  const [isInternationalShipping, setIsInternationalShipping] = useState(false);
+  const [destinationCountry, setDestinationCountry] = useState('EEUU');
+  const [rfcInput, setRfcInput] = useState('XAXX010101000');
+  const [razonSocialInput, setRazonSocialInput] = useState('ARQUITECTURA Y DISEÑO B2B S.A. DE C.V.');
+  const [cfdiUso, setCfdiUso] = useState('G03 - Gastos en general');
+
+  // Calculator State
+  const [calcPrice, setCalcPrice] = useState(45000);
+
+  // Calculated properties for current active artwork or item in checkout
+  const activeArt = selectedArtwork || SAMPLE_ARTWORKS[0];
+
+  // Financial Breakdown calculations
+  const calculateFees = (price, isIntl = false) => {
+    let platformRate = 0.12; // Base 12%
+    if (price >= 100000) platformRate = 0.05; // 5% for high ticket
+    else if (price >= 40000) platformRate = 0.08; // 8% for mid ticket
+
+    const platformFee = price * platformRate;
+    const baseShipping = price > 50000 ? 2500 : 1200;
+    const packagingFee = 850; // Pro packaging
+    const insuranceFee = price * 0.015; // 1.5% insurance
+    const customDuties = isIntl ? price * 0.18 : 0; // Estimated duty for international
+    
+    const subtotal = price + platformFee + baseShipping + packagingFee + insuranceFee + customDuties;
+    const vatSAT = price * 0.16; // 16% IVA para CFDI
+
+    return {
+      platformRatePercent: (platformRate * 100).toFixed(0),
+      platformFee,
+      baseShipping,
+      packagingFee,
+      insuranceFee,
+      customDuties,
+      vatSAT,
+      total: subtotal + vatSAT,
+      traditionalGalleryFee: price * 0.50, // Physical gallery 50%
+      artistNetPlatform: price * (1 - platformRate),
+      artistNetTraditional: price * 0.50
+    };
+  };
+
+  const currentFees = useMemo(() => {
+    return calculateFees(activeArt.price, isInternationalShipping);
+  }, [activeArt, isInternationalShipping]);
+
+  const calcFeesComparison = useMemo(() => {
+    return calculateFees(calcPrice, false);
+  }, [calcPrice]);
+
+  // Filter artworks
+  const filteredArtworks = SAMPLE_ARTWORKS.filter(art => {
+    const matchesCat = filterCategory === 'todos' || 
+      (filterCategory === '2d' && art.category.includes('2D')) ||
+      (filterCategory === '3d' && art.category.includes('3D'));
+    
+    const matchesRegion = filterRegion === 'todas' || art.location.toLowerCase().includes(filterRegion.toLowerCase());
+    const matchesSearch = art.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          art.artist.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          art.medium.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesCat && matchesRegion && matchesSearch;
+  });
+
+  return (
+    <div className="min-h-screen bg-[#FBF9F5] text-slate-900 font-sans antialiased selection:bg-amber-100 selection:text-amber-900">
+      
+      {/* --- TOP BRAND & ROLE SWITCHER BAR --- */}
+      <header className="sticky top-0 z-40 bg-[#121212] text-white border-b border-neutral-800 shadow-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            
+            {/* Brand Logo */}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-sm bg-gradient-to-tr from-amber-600 via-amber-400 to-amber-200 flex items-center justify-center text-slate-950 font-serif font-bold text-xl shadow-lg">
+                AC
+              </div>
+              <div>
+                <span className="text-xl font-serif tracking-wider font-semibold bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-stone-100 to-amber-400">
+                  ARTCONNEX
+                </span>
+                <span className="block text-[10px] text-amber-400/80 tracking-widest uppercase font-mono">
+                  Red de Arte & Logística MX
+                </span>
+              </div>
+            </div>
+
+            {/* Role Switcher Pills */}
+            <div className="hidden lg:flex items-center p-1.5 bg-neutral-900 rounded-full border border-neutral-800 text-xs">
+              <span className="px-3 text-neutral-500 font-mono text-[11px] uppercase">Perspectiva:</span>
+              <button
+                onClick={() => setActiveRole('comprador')}
+                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full transition-all ${
+                  activeRole === 'comprador'
+                    ? 'bg-amber-500 text-slate-950 font-medium shadow-md'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span>Comprador / Arquitecto B2B</span>
+              </button>
+
+              <button
+                onClick={() => setActiveRole('artista')}
+                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full transition-all ${
+                  activeRole === 'artista'
+                    ? 'bg-amber-500 text-slate-950 font-medium shadow-md'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                <Palette className="w-3.5 h-3.5" />
+                <span>Artista</span>
+              </button>
+
+              <button
+                onClick={() => setActiveRole('galeria')}
+                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full transition-all ${
+                  activeRole === 'galeria'
+                    ? 'bg-amber-500 text-slate-950 font-medium shadow-md'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Galería / Curador</span>
+              </button>
+
+              <button
+                onClick={() => setActiveRole('insights')}
+                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full transition-all ${
+                  activeRole === 'insights'
+                    ? 'bg-amber-400 text-slate-950 font-semibold shadow-md'
+                    : 'text-amber-400/80 hover:text-amber-300'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Pivote 1 Insights</span>
+              </button>
+            </div>
+
+            {/* Action Indicators */}
+            <div className="flex items-center space-x-4">
+              <div className="text-right hidden sm:block font-mono text-xs text-neutral-400">
+                <div className="flex items-center justify-end text-emerald-400 space-x-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>SAT CFDI 4.0 Activo</span>
+                </div>
+                <span className="text-[10px] text-neutral-500">Logística SPEI Integrada</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Switcher Bar */}
+        <div className="lg:hidden flex overflow-x-auto px-4 py-2 bg-neutral-900 border-t border-neutral-800 text-xs space-x-2">
+          <button
+            onClick={() => setActiveRole('comprador')}
+            className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeRole === 'comprador' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-neutral-300'}`}
+          >
+            Comprador B2B
+          </button>
+          <button
+            onClick={() => setActiveRole('artista')}
+            className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeRole === 'artista' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-neutral-300'}`}
+          >
+            Artista
+          </button>
+          <button
+            onClick={() => setActiveRole('galeria')}
+            className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeRole === 'galeria' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-neutral-300'}`}
+          >
+            Galería
+          </button>
+          <button
+            onClick={() => setActiveRole('insights')}
+            className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeRole === 'insights' ? 'bg-amber-400 text-slate-950 font-bold' : 'text-amber-400'}`}
+          >
+            Pivote 1 Insights
+          </button>
+        </div>
+      </header>
+
+      {/* --- HERO / CONTEXT BANNER BASED ON ACTIVE ROLE --- */}
+      <section className="bg-stone-900 text-stone-100 border-b border-stone-800 relative overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          {activeRole === 'comprador' && (
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 text-xs font-mono border border-amber-500/20 mb-2">
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Portal para Compradores & Despachos B2B</span>
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-serif text-white">
+                  Adquisición Directa de Arte con Certeza Fiscal y Logística
+                </h1>
+                <p className="mt-1 text-sm text-stone-400 max-w-2xl">
+                  Accede a fichas técnicas 3D (peso, anclaje, volumen) para proyectos arquitectónicos, emisión automática de CFDI 4.0 del SAT y seguro de distribución internacional sin aranceles sorpresa.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <a href="#marketplace" className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-medium text-xs rounded transition shadow-md flex items-center space-x-2">
+                  <span>Explorar Obras Con Ficha B2B</span>
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          )}
+
+          {activeRole === 'artista' && (
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 text-xs font-mono border border-emerald-500/20 mb-2">
+                  <Palette className="w-3.5 h-3.5" />
+                  <span>Portal del Creador / Periferia y Regiones</span>
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-serif text-white">
+                  Conserva hasta el 95% de tus Ventas sin la Carga de Logística
+                </h1>
+                <p className="mt-1 text-sm text-stone-400 max-w-2xl">
+                  Elimina el 50% de comisión abusiva de galerías físicas. Nosotros recolectamos en tu estudio (Tlalpan, Acapulco, Monterrey), nos encargamos del empaque artesanal y la facturación fiscal.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <a href="#calculadora" className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-medium text-xs rounded transition shadow-md flex items-center space-x-2">
+                  <Calculator className="w-4 h-4" />
+                  <span>Calcular tu Ahorro vs Galería</span>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {activeRole === 'galeria' && (
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 text-xs font-mono border border-amber-500/20 mb-2">
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Gestión Curatorial & Red de Distribución</span>
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-serif text-white">
+                  Curaduría Amplificada con Trazabilidad Criptográfica
+                </h1>
+                <p className="mt-1 text-sm text-stone-400 max-w-2xl">
+                  Digitaliza certificados de autenticidad, gestiona consignaciones regionales y ofrece cobro por SPEI directo a coleccionistas institucionales con expedientes técnicos completos.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeRole === 'insights' && (
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded bg-amber-400/20 text-amber-300 text-xs font-mono border border-amber-400/30 mb-2">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Documento Oficial: Pivote 1 - Equipo 2</span>
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-serif text-amber-200">
+                  Hallazgos de Campo & Rediseño de Hipótesis de Negocio
+                </h1>
+                <p className="mt-1 text-sm text-stone-300 max-w-2xl">
+                  Análisis detallado de entrevistas a artistas de alta trayectoria, compradores institucionales, escultores y galeristas. Ajuste del modelo de negocio hacia comisiones escalonadas y B2B.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* --- MAIN CONTENT CONTAINER --- */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
+
+        {/* ========================================================= */}
+        {/* SECTION: PIVOTE 1 INSIGHTS DASHBOARD (WHEN SELECTED OR SCROLLED) */}
+        {/* ========================================================= */}
+        {activeRole === 'insights' ? (
+          <section className="space-y-8 animate-fadeIn">
+            <div className="bg-white p-6 sm:p-8 rounded-xl border border-stone-200 shadow-sm">
+              <div className="border-b border-stone-200 pb-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-serif text-stone-900 font-bold">
+                    Resumen de Validación de Hipótesis (Pivote 1)
+                  </h2>
+                  <p className="text-xs text-stone-500 font-mono mt-1">
+                    Análisis cualitativo basado en respuestas de Liliana Rodríguez, Pamela Treviño, Annya R., Iker Quintanar y Aida Garza.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2 text-xs font-mono">
+                  <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-medium">3 Hipótesis Validadas</span>
+                  <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full font-medium">2 Hallazgos Nuevos B2B</span>
+                </div>
+              </div>
+
+              {/* Grid of Insights */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {PIVOTE_INSIGHTS.map((insight, idx) => (
+                  <div key={idx} className="p-5 rounded-lg bg-stone-50 border border-stone-200 hover:border-amber-400 transition flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded font-semibold ${
+                          insight.type === 'validado' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                        }`}>
+                          {insight.type === 'validado' ? 'Hipótesis Validada' : 'Nuevo Dolor Descubierto'}
+                        </span>
+                        <Info className="w-4 h-4 text-stone-400" />
+                      </div>
+                      <h3 className="font-serif font-semibold text-stone-900 text-base mb-2">
+                        {insight.title}
+                      </h3>
+                      <p className="text-xs font-serif italic text-stone-600 bg-amber-50/60 p-2.5 rounded border border-amber-100 mb-3">
+                        {insight.quote}
+                      </p>
+                      <p className="text-xs text-stone-600 leading-relaxed">
+                        {insight.details}
+                      </p>
+                    </div>
+                    <div className="pt-3 border-t border-stone-200/80 flex items-center justify-between text-[11px] font-mono text-amber-800 font-medium">
+                      <span>Solución Implemented:</span>
+                      <span>{insight.impact}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Segmented Model Conclusions */}
+              <div className="mt-8 p-6 bg-stone-900 text-white rounded-xl space-y-4">
+                <h3 className="text-lg font-serif text-amber-300">Conclusión Estratégica del Equipo 2</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-stone-300">
+                  <div className="p-3 bg-stone-800/80 rounded border border-stone-700">
+                    <span className="text-amber-400 font-bold block mb-1">Grupo 1: Artistas Emergentes</span>
+                    Les pesa la logística manual y el 50% de comisión física. La certificación no es urgente aún; requieren automatización de empaque.
+                  </div>
+                  <div className="p-3 bg-stone-800/80 rounded border border-stone-700">
+                    <span className="text-amber-400 font-bold block mb-1">Grupo 2: High-Ticket & B2B</span>
+                    Exigen pagos SPEI, facturación SAT (CFDI), certificados criptográficos y comisión baja (5-8%) por el alto valor de obra.
+                  </div>
+                  <div className="p-3 bg-stone-800/80 rounded border border-stone-700">
+                    <span className="text-amber-400 font-bold block mb-1">Grupo 3: Periferia Geográfica</span>
+                    Ubicados fuera de Roma/Condesa/Polanco (Acapulco, Tlalpan). Su barrera no es el talento, sino el costo de acceso al centro.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+
+        {/* ========================================================= */}
+        {/* SECTION: CALCULADORA INTERACTIVA DE COMISIONES (MODULO 4) */}
+        {/* ========================================================= */}
+        <section id="calculadora" className="bg-gradient-to-br from-stone-900 via-stone-900 to-stone-950 text-white p-6 sm:p-10 rounded-2xl shadow-2xl relative overflow-hidden border border-stone-800">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="max-w-3xl mb-8">
+            <span className="text-xs uppercase font-mono text-amber-400 tracking-wider flex items-center space-x-1.5">
+              <Calculator className="w-4 h-4" />
+              <span>Módulo Transparente de Ingresos para Artistas</span>
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-serif text-white mt-1">
+              Simulador de Ganancias: ArtConnex vs. Galería Física Tradicional
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-400 mt-2">
+              Verifica cómo la comisión escalonada de ArtConnex (5% - 12%) protege las ganancias del artista frente al 40%-50% cobrado en galerías físicas tradicionales.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            {/* Controls Side */}
+            <div className="lg:col-span-5 space-y-6 bg-stone-800/50 p-6 rounded-xl border border-stone-700/60">
+              <div>
+                <label className="block text-xs font-mono text-stone-300 uppercase mb-2">
+                  Precio de Lista de la Obra (MXN)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 font-mono text-sm">$</span>
+                  <input
+                    type="number"
+                    value={calcPrice}
+                    onChange={(e) => setCalcPrice(Math.max(1000, Number(e.target.value)))}
+                    className="w-full bg-stone-900 border border-stone-700 rounded-lg py-2.5 pl-8 pr-4 text-amber-300 font-mono text-lg focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+                <input
+                  type="range"
+                  min="5000"
+                  max="200000"
+                  step="5000"
+                  value={calcPrice}
+                  onChange={(e) => setCalcPrice(Number(e.target.value))}
+                  className="w-full mt-4 accent-amber-400 bg-stone-700 h-1.5 rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] font-mono text-stone-400 mt-1">
+                  <span>$5,000</span>
+                  <span>$100,000</span>
+                  <span>$200,000+</span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-stone-900/80 rounded-lg text-xs space-y-2 border border-stone-800 font-mono">
+                <div className="flex justify-between text-stone-400">
+                  <span>Comisión Aplicada:</span>
+                  <span className="text-amber-400 font-bold">{calcFeesComparison.platformRatePercent}% Escalonada</span>
+                </div>
+                <div className="flex justify-between text-stone-400">
+                  <span>Facturación Fiscal:</span>
+                  <span className="text-emerald-400">SAT CFDI 4.0 Incluido</span>
+                </div>
+                <div className="flex justify-between text-stone-400">
+                  <span>Recolecta en Estudio:</span>
+                  <span className="text-stone-200">100% Gestionado</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Comparison Side */}
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              {/* Traditional Gallery Card */}
+              <div className="p-5 rounded-xl bg-stone-900/90 border border-red-500/30 relative">
+                <span className="text-[10px] font-mono uppercase bg-red-500/20 text-red-300 px-2 py-0.5 rounded font-bold">
+                  Galería Física Tradicional
+                </span>
+                <div className="mt-4">
+                  <span className="text-xs text-stone-400 block font-mono">Comisión Fija (50%)</span>
+                  <span className="text-xl font-mono text-red-400 font-bold">
+                    -${calcFeesComparison.traditionalGalleryFee.toLocaleString('es-MX')} MXN
+                  </span>
+                </div>
+                <div className="mt-6 pt-4 border-t border-stone-800">
+                  <span className="text-xs text-stone-400 block">Ganancia Neta para el Artista:</span>
+                  <span className="text-2xl font-serif text-stone-300 font-bold">
+                    ${calcFeesComparison.artistNetTraditional.toLocaleString('es-MX')} MXN
+                  </span>
+                </div>
+                <p className="text-[11px] text-stone-500 mt-3 italic">
+                  *Requiere trasladar obra a la Roma/Polanco y asumir costo de empaque personal.
+                </p>
+              </div>
+
+              {/* ArtConnex Platform Card */}
+              <div className="p-5 rounded-xl bg-gradient-to-b from-stone-800 to-stone-900 border-2 border-amber-400 relative shadow-xl">
+                <div className="absolute -top-3 right-3 bg-amber-400 text-slate-950 font-mono text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full shadow">
+                  Plataforma ArtConnex
+                </div>
+                <span className="text-[10px] font-mono uppercase text-amber-300 font-bold block">
+                  Comisión Escalonada ({calcFeesComparison.platformRatePercent}%)
+                </span>
+                <div className="mt-4">
+                  <span className="text-xs text-stone-400 block font-mono">Deducción de Comisión</span>
+                  <span className="text-xl font-mono text-amber-300 font-bold">
+                    -${calcFeesComparison.platformFee.toLocaleString('es-MX')} MXN
+                  </span>
+                </div>
+                <div className="mt-6 pt-4 border-t border-stone-700">
+                  <span className="text-xs text-stone-400 block">Ganancia Neta para el Artista:</span>
+                  <span className="text-2xl font-serif text-emerald-400 font-bold">
+                    ${calcFeesComparison.artistNetPlatform.toLocaleString('es-MX')} MXN
+                  </span>
+                </div>
+                <div className="mt-3 py-1.5 px-2 bg-emerald-500/10 rounded text-emerald-300 text-[11px] font-mono flex items-center justify-between">
+                  <span>Ganancia Extra:</span>
+                  <span className="font-bold">
+                    +${(calcFeesComparison.artistNetPlatform - calcFeesComparison.artistNetTraditional).toLocaleString('es-MX')} MXN
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+
+        {/* ========================================================= */}
+        {/* SECTION: MARKETPLACE DE ARTE CON FICHAS B2B Y FILTROS */}
+        {/* ========================================================= */}
+        <section id="marketplace" className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-stone-200 pb-5">
+            <div>
+              <span className="text-xs font-mono uppercase text-amber-700 tracking-wider">Catálogo Curado</span>
+              <h2 className="text-2xl sm:text-3xl font-serif text-stone-900 font-bold">
+                Obras Disponibles con Ficha B2B y Certificado Digital
+              </h2>
+            </div>
+
+            {/* Filter controls */}
+            <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar artista, técnica..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 pr-3 py-2 bg-white border border-stone-300 rounded-lg text-xs focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="px-3 py-2 bg-white border border-stone-300 rounded-lg text-xs focus:outline-none focus:border-amber-500"
+              >
+                <option value="todos">Todas las Formas (2D / 3D)</option>
+                <option value="2d">Pintura 2D (Lienzos)</option>
+                <option value="3d">Escultura 3D (Volumen)</option>
+              </select>
+
+              <select
+                value={filterRegion}
+                onChange={(e) => setFilterRegion(e.target.value)}
+                className="px-3 py-2 bg-white border border-stone-300 rounded-lg text-xs focus:outline-none focus:border-amber-500"
+              >
+                <option value="todas">Todas las Regiones</option>
+                <option value="Tlalpan">Tlalpan / Sur CDMX</option>
+                <option value="Acapulco">Acapulco, Gro.</option>
+                <option value="Monterrey">Monterrey, NL</option>
+                <option value="Roma">Roma / Centro CDMX</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Artwork Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredArtworks.map((art) => (
+              <div
+                key={art.id}
+                className={`bg-white rounded-xl overflow-hidden border transition-all duration-300 flex flex-col justify-between group ${
+                  selectedArtwork?.id === art.id ? 'border-amber-500 ring-2 ring-amber-400/20 shadow-lg' : 'border-stone-200 hover:border-stone-400 hover:shadow-md'
+                }`}
+              >
+                <div>
+                  {/* Artwork Image Container */}
+                  <div className="relative aspect-square overflow-hidden bg-stone-100">
+                    <img
+                      src={art.image}
+                      alt={art.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 left-3 flex flex-col gap-1">
+                      <span className="px-2 py-0.5 bg-stone-900/80 text-white text-[10px] font-mono rounded backdrop-blur-sm">
+                        {art.category}
+                      </span>
+                      {art.has3dFile && (
+                        <span className="px-2 py-0.5 bg-amber-500 text-slate-950 text-[10px] font-mono font-bold rounded flex items-center space-x-1 shadow">
+                          <Box className="w-3 h-3" />
+                          <span>Ficha 3D / Arquitectura</span>
+                        </span>
+                      )}
+                    </div>
+                    <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[11px] font-mono text-stone-800 shadow flex items-center space-x-1">
+                      <MapPin className="w-3 h-3 text-amber-600" />
+                      <span>{art.location}</span>
+                    </div>
+                  </div>
+
+                  {/* Artwork Details */}
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-serif font-bold text-stone-900 text-base leading-snug">
+                          {art.title}
+                        </h3>
+                        <p className="text-xs text-stone-500 font-medium">{art.artist}</p>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-stone-600 line-clamp-2 italic font-serif">
+                      "{art.description}"
+                    </p>
+
+                    <div className="pt-2 text-[11px] font-mono text-stone-500 space-y-1 bg-stone-50 p-2.5 rounded border border-stone-100">
+                      <div className="flex justify-between">
+                        <span>Técnica:</span>
+                        <span className="text-stone-800 truncate max-w-[140px]">{art.medium}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Medidas:</span>
+                        <span className="text-stone-800">{art.dimensions}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Peso Físico:</span>
+                        <span className="text-stone-800">{art.weight}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Actions */}
+                <div className="p-4 pt-0 space-y-2">
+                  <div className="flex items-baseline justify-between pt-2 border-t border-stone-100">
+                    <span className="text-[10px] font-mono uppercase text-stone-400">Precio Obra:</span>
+                    <span className="text-lg font-mono font-bold text-stone-900">
+                      ${art.price.toLocaleString('es-MX')} <span className="text-xs font-normal">MXN</span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setSelectedArtwork(art)}
+                      className={`w-full py-2 px-3 rounded text-xs font-mono transition flex items-center justify-center space-x-1 ${
+                        selectedArtwork?.id === art.id
+                          ? 'bg-amber-500 text-slate-950 font-bold'
+                          : 'bg-stone-900 text-white hover:bg-stone-800'
+                      }`}
+                    >
+                      <Receipt className="w-3.5 h-3.5" />
+                      <span>Cotizar / Ver</span>
+                    </button>
+
+                    <a
+                      href="#checkout-section"
+                      onClick={() => setSelectedArtwork(art)}
+                      className="w-full py-2 px-3 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-mono font-medium transition flex items-center justify-center space-x-1 border border-amber-300"
+                    >
+                      <span>Comprar</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+
+              </div>
+            ))}
+          </div>
+        </section>
+
+
+        {/* ========================================================= */}
+        {/* SECTION: DETALLE DE OBRA, FICHA TÉCNICA B2B Y COTIZADOR INTEGRADO */}
+        {/* ========================================================= */}
+        <section id="checkout-section" className="bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden">
+          
+          <div className="bg-stone-900 text-white p-6 sm:p-8 border-b border-stone-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span className="text-xs font-mono uppercase text-amber-400 tracking-widest flex items-center space-x-2">
+                <Box className="w-4 h-4" />
+                <span>Módulo de Cotización B2B + Transacción SAT SPEI</span>
+              </span>
+              <h2 className="text-2xl font-serif mt-1 text-stone-100">
+                Obra Seleccionada: <span className="text-amber-300">{activeArt.title}</span>
+              </h2>
+              <p className="text-xs text-stone-400 mt-1">
+                Por {activeArt.artist} — Ubicación original: {activeArt.location}
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <span className="text-xs font-mono text-stone-400">Paso de Transacción:</span>
+              <div className="flex items-center space-x-1 font-mono text-xs">
+                <span className={`w-7 h-7 rounded-full flex items-center justify-center ${checkoutStep === 1 ? 'bg-amber-400 text-slate-950 font-bold' : 'bg-stone-800 text-stone-400'}`}>1</span>
+                <span className="text-stone-600">—</span>
+                <span className={`w-7 h-7 rounded-full flex items-center justify-center ${checkoutStep === 2 ? 'bg-amber-400 text-slate-950 font-bold' : 'bg-stone-800 text-stone-400'}`}>2</span>
+                <span className="text-stone-600">—</span>
+                <span className={`w-7 h-7 rounded-full flex items-center justify-center ${checkoutStep === 3 ? 'bg-amber-400 text-slate-950 font-bold' : 'bg-stone-800 text-stone-400'}`}>3</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            {/* Left Column: Spec Sheet & Certificate Preview */}
+            <div className="lg:col-span-5 space-y-6 border-r border-stone-100 lg:pr-6">
+              
+              <div className="aspect-video bg-stone-100 rounded-lg overflow-hidden border border-stone-200 relative">
+                <img src={activeArt.image} alt={activeArt.title} className="w-full h-full object-cover" />
+                <div className="absolute top-2 right-2 bg-stone-900/90 text-amber-300 text-[10px] font-mono px-2 py-1 rounded border border-amber-500/30">
+                  {activeArt.category}
+                </div>
+              </div>
+
+              {/* B2B Technical Spec Sheet Box */}
+              <div className="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-3">
+                <div className="flex items-center justify-between border-b border-stone-200 pb-2">
+                  <h3 className="font-serif font-bold text-stone-900 text-sm flex items-center space-x-2">
+                    <Layers className="w-4 h-4 text-amber-700" />
+                    <span>Ficha Técnica para Arquitectura / B2B</span>
+                  </h3>
+                  <button className="text-[10px] font-mono text-amber-800 hover:underline flex items-center space-x-1 font-bold">
+                    <Download className="w-3 h-3" />
+                    <span>Descargar PDF / 3D</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs font-mono text-stone-700">
+                  <div>
+                    <span className="text-stone-400 block text-[10px]">Dimensiones:</span>
+                    <span>{activeArt.dimensions}</span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 block text-[10px]">Peso Total:</span>
+                    <span>{activeArt.weight}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-stone-400 block text-[10px]">Especificación de Anclaje Muro/Piso:</span>
+                    <span className="text-stone-900 font-sans text-xs">{activeArt.anchoring}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Digital Certificate Preview Card (Modulo 3) */}
+              <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-200/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-serif font-bold text-amber-950 flex items-center space-x-1.5">
+                    <ShieldCheck className="w-4 h-4 text-amber-700" />
+                    <span>Certificado de Autenticidad Digital</span>
+                  </span>
+                  <span className="text-[10px] font-mono bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-bold">
+                    {activeArt.certificateId}
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-900/80 leading-relaxed">
+                  Firma criptográfica verificada directa del artista {activeArt.artist}. Historial guardado en el perfil personal del comprador.
+                </p>
+                <div className="pt-2 border-t border-amber-200/60 flex items-center justify-between text-[10px] font-mono text-amber-900">
+                  <span>Trazabilidad: 3 Nodos Registrados</span>
+                  <QrCode className="w-4 h-4 text-amber-800" />
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right Column: Checkout Interactive Steps */}
+            <div className="lg:col-span-7 space-y-6">
+
+              {/* STEP 1: LOGISTICS & TRANSPARENT PRICING */}
+              {checkoutStep === 1 && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="border-b border-stone-200 pb-3">
+                    <h3 className="font-serif text-lg font-bold text-stone-900">
+                      Paso 1: Cotización Logística y Desglose Financiero
+                    </h3>
+                    <p className="text-xs text-stone-500">
+                      Empaque artesanal a mano, seguro contra daños y gestión aduanal previa.
+                    </p>
+                  </div>
+
+                  {/* Toggle Shipping Destination */}
+                  <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 space-y-3">
+                    <label className="block text-xs font-mono uppercase text-stone-600 font-bold">
+                      Destino del Envío:
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => setIsInternationalShipping(false)}
+                        className={`p-3 rounded-lg border text-xs font-mono text-left transition ${
+                          !isInternationalShipping
+                            ? 'bg-white border-amber-500 ring-2 ring-amber-400/20 text-stone-900 font-bold'
+                            : 'bg-stone-100 border-stone-300 text-stone-600'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="w-4 h-4 text-amber-600" />
+                          <span>República Mexicana (Nacional)</span>
+                        </div>
+                        <span className="text-[10px] text-stone-500 font-normal block mt-1">Flete local y empaque especializado.</span>
+                      </button>
+
+                      <button
+                        onClick={() => setIsInternationalShipping(true)}
+                        className={`p-3 rounded-lg border text-xs font-mono text-left transition ${
+                          isInternationalShipping
+                            ? 'bg-white border-amber-500 ring-2 ring-amber-400/20 text-stone-900 font-bold'
+                            : 'bg-stone-100 border-stone-300 text-stone-600'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <Globe className="w-4 h-4 text-amber-600" />
+                          <span>Internacional (EEUU / Europa)</span>
+                        </div>
+                        <span className="text-[10px] text-stone-500 font-normal block mt-1">Calcula trámites aduanales de antemano.</span>
+                      </button>
+                    </div>
+
+                    {isInternationalShipping && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900 flex items-start space-x-2">
+                        <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block">Aviso Aduanal Pre-Calculado (Insight Aida Garza):</span>
+                          Estimamos e incluimos los impuestos aduanales (+18%) para evitar sobrecostos sorpresa del 50%-60% en la recepción.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Financial Breakdown Table */}
+                  <div className="bg-stone-900 text-white p-5 rounded-xl space-y-3 font-mono text-xs">
+                    <div className="flex justify-between pb-2 border-b border-stone-800 text-stone-300">
+                      <span>Precio Obra Original:</span>
+                      <span className="font-bold">${activeArt.price.toLocaleString('es-MX')} MXN</span>
+                    </div>
+
+                    <div className="flex justify-between text-stone-400">
+                      <span className="flex items-center space-x-1">
+                        <span>Comisión Serv. Plataforma ({currentFees.platformRatePercent}%):</span>
+                        <HelpCircle className="w-3 h-3 text-stone-500" />
+                      </span>
+                      <span>${currentFees.platformFee.toLocaleString('es-MX')} MXN</span>
+                    </div>
+
+                    <div className="flex justify-between text-stone-400">
+                      <span>Empaque Especializado a Mano:</span>
+                      <span>${currentFees.packagingFee.toLocaleString('es-MX')} MXN</span>
+                    </div>
+
+                    <div className="flex justify-between text-stone-400">
+                      <span>Flete & Traslado Seguro:</span>
+                      <span>${currentFees.baseShipping.toLocaleString('es-MX')} MXN</span>
+                    </div>
+
+                    <div className="flex justify-between text-stone-400">
+                      <span>Póliza Seguro Obras de Arte (1.5%):</span>
+                      <span>${currentFees.insuranceFee.toLocaleString('es-MX')} MXN</span>
+                    </div>
+
+                    {isInternationalShipping && (
+                      <div className="flex justify-between text-amber-300 font-semibold">
+                        <span>Estimación Aranceles Aduanales:</span>
+                        <span>${currentFees.customDuties.toLocaleString('es-MX')} MXN</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between text-stone-400 pt-2 border-t border-stone-800">
+                      <span>IVA Deducible (16% CFDI SAT):</span>
+                      <span className="text-emerald-400">${currentFees.vatSAT.toLocaleString('es-MX')} MXN</span>
+                    </div>
+
+                    <div className="flex justify-between text-base font-bold text-amber-400 pt-3 border-t-2 border-stone-700">
+                      <span>Total A Invertir:</span>
+                      <span>${currentFees.total.toLocaleString('es-MX')} MXN</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setCheckoutStep(2)}
+                    className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-mono font-bold text-sm rounded-lg transition shadow-md flex items-center justify-center space-x-2"
+                  >
+                    <span>Continuar a Datos Fiscales (CFDI SAT)</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+
+              {/* STEP 2: FISCAL DATA & SAT CFDI 4.0 INTEGRATION */}
+              {checkoutStep === 2 && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="border-b border-stone-200 pb-3">
+                    <h3 className="font-serif text-lg font-bold text-stone-900 flex items-center space-x-2">
+                      <Receipt className="w-5 h-5 text-emerald-600" />
+                      <span>Paso 2: Emisión de Factura Fiscal CFDI 4.0 (México)</span>
+                    </h3>
+                    <p className="text-xs text-stone-500">
+                      Requerido para despachos de arquitectura, empresas B2B y deducción de impuestos corporativos.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 font-mono text-xs">
+                    <div>
+                      <label className="block text-stone-700 font-bold mb-1">RFC del Receptor:</label>
+                      <input
+                        type="text"
+                        value={rfcInput}
+                        onChange={(e) => setRfcInput(e.target.value)}
+                        className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded text-stone-900 focus:outline-none focus:border-amber-500 uppercase"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-stone-700 font-bold mb-1">Razón Social / Nombre Fiscal:</label>
+                      <input
+                        type="text"
+                        value={razonSocialInput}
+                        onChange={(e) => setRazonSocialInput(e.target.value)}
+                        className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded text-stone-900 focus:outline-none focus:border-amber-500 uppercase"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-stone-700 font-bold mb-1">Uso de CFDI:</label>
+                      <select
+                        value={cfdiUso}
+                        onChange={(e) => setCfdiUso(e.target.value)}
+                        className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded text-stone-900 focus:outline-none focus:border-amber-500"
+                      >
+                        <option value="G03 - Gastos en general">G03 - Gastos en general</option>
+                        <option value="I08 - Otra maquinaria y equipo">I08 - Otra maquinaria y equipo</option>
+                        <option value="CP01 - Pagos">CP01 - Pagos</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Factura Preview Box */}
+                  <div className="p-4 bg-emerald-50/80 rounded-xl border border-emerald-200 text-xs font-mono space-y-2 text-emerald-950">
+                    <div className="flex justify-between items-center font-bold">
+                      <span className="flex items-center space-x-1">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>Pre-Emisión CFDI 4.0 SAT</span>
+                      </span>
+                      <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">VÁLIDO MX</span>
+                    </div>
+                    <div className="text-[11px] text-emerald-800 space-y-1 pt-1">
+                      <div>RFC: {rfcInput}</div>
+                      <div>Razón: {razonSocialInput}</div>
+                      <div>Concepto: Adquisición Obra de Arte "<em>{activeArt.title}</em>"</div>
+                      <div>Monto Total a Facturar: <strong>${currentFees.total.toLocaleString('es-MX')} MXN</strong></div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setCheckoutStep(1)}
+                      className="w-1/3 py-3 bg-stone-200 hover:bg-stone-300 text-stone-800 font-mono font-bold text-xs rounded-lg transition"
+                    >
+                      Atrás
+                    </button>
+                    <button
+                      onClick={() => setCheckoutStep(3)}
+                      className="w-2/3 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-mono font-bold text-sm rounded-lg transition shadow-md flex items-center justify-center space-x-2"
+                    >
+                      <span>Generar Orden y Cobro SPEI</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+
+              {/* STEP 3: SPEI PAYMENT & DISTRIBUTION TRACKER */}
+              {checkoutStep === 3 && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="border-b border-stone-200 pb-3">
+                    <h3 className="font-serif text-lg font-bold text-stone-900 flex items-center space-x-2">
+                      <CreditCard className="w-5 h-5 text-amber-600" />
+                      <span>Paso 3: Ficha de Pago SPEI & Seguimiento de Entrega</span>
+                    </h3>
+                    <p className="text-xs text-stone-500">
+                      Transfiere vía banca mexicana. Liberación automática al artista tras confirmación de empaque.
+                    </p>
+                  </div>
+
+                  {/* Simulated SPEI Box */}
+                  <div className="p-5 bg-stone-900 text-white rounded-xl space-y-3 font-mono text-xs border border-stone-800">
+                    <div className="flex justify-between items-center border-b border-stone-800 pb-2">
+                      <span className="text-amber-400 font-bold uppercase text-[10px]">Transferencia SPEI Instantánea</span>
+                      <span className="text-stone-400 text-[10px]">STP / Banxico</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-stone-400 text-[10px] block">Banco Destino:</span>
+                        <span className="text-stone-100 font-bold">STP (Sistema de Transferencias y Pagos)</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 text-[10px] block">CLABE Interbancaria (Única para esta Orden):</span>
+                        <span className="text-amber-300 font-bold text-sm select-all">6461 8011 2003 9481 22</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 text-[10px] block">Concepto de Pago:</span>
+                        <span className="text-stone-200">ART-{activeArt.id.toUpperCase()}</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 text-[10px] block">Monto Exacto:</span>
+                        <span className="text-emerald-400 font-bold text-base">${currentFees.total.toLocaleString('es-MX')} MXN</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Distribution Tracker Preview */}
+                  <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 space-y-3">
+                    <h4 className="font-mono text-xs uppercase font-bold text-stone-800 flex items-center space-x-2">
+                      <Truck className="w-4 h-4 text-amber-600" />
+                      <span>Ruta de Distribución Asignada:</span>
+                    </h4>
+
+                    <div className="space-y-3 font-mono text-xs">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] shrink-0 font-bold">1</div>
+                        <div>
+                          <span className="font-bold text-stone-900 block">Recolecta programada en Estudio de {activeArt.artist}</span>
+                          <span className="text-[10px] text-stone-500">{activeArt.location} (Sin costo de traslado para el artista)</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start space-x-3">
+                        <div className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center text-[10px] shrink-0 font-bold">2</div>
+                        <div>
+                          <span className="font-bold text-stone-900 block">Empaque Especializado Artesanal & Sellado de Póliza</span>
+                          <span className="text-[10px] text-stone-500">Caja de madera a medida e inspección de autenticidad</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start space-x-3 opacity-60">
+                        <div className="w-5 h-5 rounded-full bg-stone-300 text-stone-700 flex items-center justify-center text-[10px] shrink-0 font-bold">3</div>
+                        <div>
+                          <span className="font-bold text-stone-900 block">Entrega en Destino con Certificado Físico y Digital</span>
+                          <span className="text-[10px] text-stone-500">Emisión de CFDI 4.0 adjunta en perfil</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setCheckoutStep(2)}
+                      className="w-1/3 py-3 bg-stone-200 hover:bg-stone-300 text-stone-800 font-mono font-bold text-xs rounded-lg transition"
+                    >
+                      Atrás
+                    </button>
+                    <button
+                      onClick={() => {
+                        alert('¡Pago SPEI simulado con éxito! Se ha generado la orden y la Factura SAT CFDI 4.0.');
+                        setCheckoutStep(1);
+                      }}
+                      className="w-2/3 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-sm rounded-lg transition shadow-md flex items-center justify-center space-x-2"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Simular Confirmación SPEI</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+
+      {/* --- FOOTER REGIONAL & INFORMACIÓN DE CONTACTO --- */}
+      <footer className="bg-[#121212] text-stone-400 text-xs border-t border-neutral-800 py-10 px-4 sm:px-6 lg:px-8 mt-20">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+          
+          <div className="space-y-3">
+            <span className="text-lg font-serif text-amber-200 font-bold block">ARTCONNEX MX</span>
+            <p className="text-stone-500 leading-relaxed">
+              Plataforma y red logística creada para descentralizar el mercado de arte en México. Basada en el Formato de Análisis Pivote 1 (Equipo 2).
+            </p>
+          </div>
+
+          <div className="space-y-2 font-mono">
+            <span className="text-amber-400 font-bold uppercase text-[11px] block">Cobertura de Recolecta</span>
+            <ul className="space-y-1 text-stone-400">
+              <li>• Sur CDMX (Tlalpan, Xochimilco)</li>
+              <li>• Corredor Central (Roma, Condesa, Polanco)</li>
+              <li>• Acapulco & Costas del Pacífico</li>
+              <li>• Monterrey & Zona Norte</li>
+            </ul>
+          </div>
+
+          <div className="space-y-2 font-mono">
+            <span className="text-amber-400 font-bold uppercase text-[11px] block">Cumplimiento Legal & SAT</span>
+            <ul className="space-y-1 text-stone-400">
+              <li>• Integración SPEI Directa (Banxico)</li>
+              <li>• Facturación CFDI 4.0 Inmediata</li>
+              <li>• Póliza de Seguro Artístico 100%</li>
+              <li>• Certificación Digital de Autenticidad</li>
+            </ul>
+          </div>
+
+          <div className="space-y-2 font-mono">
+            <span className="text-amber-400 font-bold uppercase text-[11px] block">Contacto Equipo 2</span>
+            <p className="text-stone-500">
+              Soporte para Compradores B2B, Galerías y Artistas Registrados.
+            </p>
+            <div className="pt-2">
+              <span className="px-2.5 py-1 bg-amber-500/10 text-amber-300 rounded border border-amber-500/20 text-[10px]">
+                Estatus del Experimento: Pivote 1 Validado
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-neutral-800 text-center font-mono text-[10px] text-stone-600">
+          © 2026 ArtConnex México. Todos los derechos reservados.
+        </div>
+      </footer>
+
+    </div>
+  );
+}
